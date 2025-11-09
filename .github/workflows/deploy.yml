@@ -1,0 +1,16 @@
+name: receipt_pipeline
+
+on:
+  push:
+    branches: [ local-1.0 ]
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: github actions test
+        run: echo test
+
+
