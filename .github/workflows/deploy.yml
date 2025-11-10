@@ -38,3 +38,69 @@ jobs:
       - name: Python Import Check
         working-directory: ./app
         run: python -c "import main"
+
+  # ---------------------------------
+  # 2) Build Job (Image Build + Scan)
+  # ---------------------------------
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set Short Image Tag
+        id: set-tag
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "IMAGE_TAG=$SHORT_SHA" >> $GITHUB_ENV
+          echo "✅ IMAGE_TAG set to $SHORT_SHA"
+
+      - name: Build Docker Image
+        working-directory: ./app
+        run: |
+          echo "🐳 Building Docker image..."
+          echo "✅ Successfully built (simulated)"
+          echo "🏷 Successfully tagged $ECR_REPOSITORY:$IMAGE_TAG"
+        # 실제 실행 명령어
+        # docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+
+      - name: Trivy Image Scan
+        run: |
+          echo "🔍 Trivy security scan would run here for: $ECR_REPOSITORY:$IMAGE_TAG"
+        # 실제 실행 명령어
+        # uses: aquasecurity/trivy-action@master
+        # with:
+        #   image-ref: $ECR_REPOSITORY:$IMAGE_TAG
+        #   severity: CRITICAL,HIGH
+        #   ignore-unfixed: true
+        #   exit-code: 1
+
+      - name: Configure AWS Credentials
+        run: |
+          echo "Successfully configured AWS credentials"
+        # 실제 실행 명령어
+        # uses: aws-actions/configure-aws-credentials@v3
+        # with:
+        #   role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        #   aws-region: ap-northeast-2
+
+      - name: Login to Amazon ECR (skip)
+        run: |
+          echo "⚠ ECR login skipped"
+        # 실제 실행 명령어
+        # uses: aws-actions/amazon-ecr-login@v2
+        # with:
+        #   mask-password: "true"
+
+      - name: Push Image to ECR (Simulation)
+        run: |
+          echo "🚀 Tag & Push to ECR (simulation)"
+          echo "docker tag $ECR_REPOSITORY:$IMAGE_TAG <AWS_ACCOUNT>.dkr.ecr.ap-northeast-2.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "docker push <AWS_ACCOUNT>.dkr.ecr.ap-northeast-2.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG"
+
+        # 실제 실행 명령어
+        # docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        # docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
