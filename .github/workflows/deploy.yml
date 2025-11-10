@@ -1,16 +1,40 @@
-name: receipt_pipeline
+name: receipt_api_pipeline
 
 on:
   push:
-    branches: [ local-1.0 ]
+    branches: [ "local-1.0" ]
 
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPOSITORY: receipt-service
+  ECS_CLUSTER: receipt-cluster
+  ECS_SERVICE: receipt-service
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  build:
+  # ---------------------------------
+  # 1) Test Job
+  # ---------------------------------
+  test:
+    name: test
     runs-on: ubuntu-latest
-
     steps:
-      - name: github actions test
-        run: echo test
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
 
+      - name: Install dependencies
+        working-directory: ./app
+        run: pip install -r requirements.txt
+
+      - name: Lint (flake8)
+        run: pip install flake8 && flake8 . --count --exit-zero
+
+      - name: Python Import Check
+        working-directory: ./app
+        run: python -c "import main"
