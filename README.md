@@ -2,7 +2,7 @@
 </br></br>
 
 # b. 기술 선택 및 설계 근거
-**왜 이러한 아키텍처를 설계했는가?**
+### 왜 이러한 아키텍처를 설계했는가?
 1. **비즈니스 로직 고려**
     - S3 버킷의 Presigned URL을 발급하여 사용자(Client)가 이미지를 S3에 업로드하는 아키텍처로 설계
       - [**보안 강화**] 서버가 파일을 중계하지 않음 → 잠재적인 공격의 노출을 막을 수 있으며, S3 접근 권한을 제어 하여 업로드된 파일의 민감정보를 보호할 수 있다.
@@ -16,7 +16,7 @@
 
 </br>
 
-**특정 AWS 서비스를 선택한 이유?**
+### 특정 AWS 서비스를 선택한 이유?
 
 - **API Gateway**
   - S3를 외부에 직접 노출하지 않기 위해 API를 진입점으로 두었으며, 인증/인가·Rate Limit·로깅을 기본 제공해 보안과 운영 부담을 동시에 줄일 수 있다고 판단
@@ -33,7 +33,7 @@
     
 </br>
 
-**주어진 요구사항(고가용성, Auto-scaling, 비용 효율성)을 어떻게 충족시켰는가?**
+### 주어진 요구사항(고가용성, Auto-scaling, 비용 효율성)을 어떻게 충족시켰는가?
 - **고가용성**
   - Multi-AZ로 인프라 구성하여 단일 AZ 장애에도 서비스 지속 가능
   - Aurora Multi-AZ를 활용해 DB 장애 자동 Failover 및 데이터 안정성 확보
@@ -47,14 +47,62 @@
 
 </br> </br>
 # c. 운영 자동화 및 장애 대응 계획
-**모니터링 전략**
+### 모니터링 전략
+
+- **모니터링 지표 정의** </br>
+
+| 리소스         | Metric                               | 모니터링 목적 |
+|----------------|--------------------------------------|----------------|
+| **ECS**        | CPU Utilization                      | CPU 포화로 인한 요청 처리 지연 및 성능 저하 탐지 |
+|                | Memory Utilization                   | 메모리 부족(OOM)으로 인한 컨테이너 비정상 종료 탐지 |
+|                | RunningTaskCount vs DesiredTaskCount  | 배포 실패 또는 Task 비정상 종료 탐지 |
+| **SQS**        | ApproximateAgeOfOldestMessage         | 메시지 백로그 증가로 인한 처리 지연 탐지 |
+| **ALB**        | 5XX Error Rate                       | 서비스 장애로 인한 요청 실패 탐지 |
+|                | TargetResponseTime (Latency)          | 서비스 응답 지연 및 성능 병목 탐지 |
+| **API Gateway**| 5XX / 4XX Error Rate                 | 외부 요청 실패 및 비정상 호출 증가 탐지 |
+|                | Latency                              | API 응답 지연 탐지 |
+|                | IntegrationLatency                   | 백엔드 연동 구간 병목 및 지연 탐지 |
+| **Aurora**     | CPU Utilization                      | DB 리소스 포화 및 성능 저하 탐지 |
+|                | Database Connections                 | 과도한 커넥션 점유로 인한 요청 실패 탐지 |
+|                | FreeStorageSpace                     | 저장 공간 부족으로 인한 장애 위험 탐지 |
+
+</br>
+
+- **알림 조건**
+
+| 리소스                   | 알림 조건                                                   | 알림 방식 |
+|--------------------------|-------------------------------------------------------------|-----------|
+| **ECS**                  | CPUUtilization ≥ 80% (5분 지속)                             | Slack     |
+|                          | MemoryUtilization ≥ 80% (5분 지속)                          | Slack     |
+| **SQS**                  | ApproximateAgeOfOldestMessage ≥ 600s (15분 지속)            | Slack     |
+| **ALB**                  | 5xx Error Rate ≥ 3% (1분 지속)                              | Slack     |
+| **API Gateway**          | 5xx Error Rate ≥ 5% (3분 지속)                              | Slack     |
+|                          | p90 Latency ≥ 2500ms (5분 지속)                             | Slack     |
+|                          | p90 IntegrationLatency ≥ 2000ms (5분 지속)                  | Slack     |
+| **Aurora**               | FreeStorageSpace < 10% of allocated storage (5분 지속)       | Slack     |
+|                          | DatabaseConnections > 90% of max_connections (5분 지속)      | Slack     |
+
+</br> </br>
+
+### 무중단 배포 전략
 
 
-**무중단 배포 전략**
+</br></br>
 
-
-**장애 대응 시나리오**
-
+### 장애 대응 시나리오
+1. **DB 연결 실패 시**
+    - API 응답지연, 트랜잭션 타임아웃 등의 증상을 모니터링하여 탐지하고, 발생시 로그 및 지표를 확보한다.
+    - 확보한 지표를 확인하여 max connection 갯수를 늘리거나 특정 세션을 종료함으로써 즉시 대응한다.
+    -  성능 테스트를 통한 적정 커넥션 풀 갯수 튜닝, 쿼리 검수를 통한 슬로우 쿼리 튜닝 등의 방법으로 재발 방지한다. </br></br>
+2. **특정 API 서버 장애 시**
+   - 알림을 통해 장애발생 상황을 전파하고, 영향범위를 확인하여 장애 수준을 판별한다.
+   - 로그 등의 지표를 통해 원인을 분석한다. MSA로 구현된 시스템일 경우 트래픽 분석을 통해 장애가 발생한 서비스를 특정한다.
+   - 분석된 원인에 따라 즉시 대응한다.
+   - 장애 원인 예시 : AWS 서비스 장애, DB 연결 부족, OOM 발생, 외부 API 토큰 만료 등
+   - 추후 재발 방지한다. </br></br>
+3. **트래픽 급증 시**
+   - 트래픽이 이상적으로 급증할시, DDos 공격인지 확인하고 대응한다.
+   - 비즈니스관련 이벤트로 인한 급증시, 부하가 감지되는 리소스들을 Scale out 한다. </br></br>
 
 
 
