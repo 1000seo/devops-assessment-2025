@@ -7,6 +7,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # 의존성 설치 (wheel 빌드)
+# 불필요한 의존성 제거하여 requirements.txt 업데이트
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 
@@ -33,9 +34,9 @@ EXPOSE 8000
 # non-root 유저로 전환
 USER appuser
 
-# 헬스체크 설정 (curl 대신 python 사용)
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+# 헬스체크 설정 주석처리 (docker-compose.yml 과 중복)
+# HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+#     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
 # 애플리케이션 실행
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
