@@ -112,7 +112,8 @@
 4. **프로덕션 트래픽 전환**
    - ALB가 Production Listener 트래픽을 기존 Blue → Green으로 100% 전환 </br></br>
 5. **안정화 시간(Bake Time) 대기**
-   - 일정 시간 동안 telemetry / 에러율 / Latency 등을 체크하여 이상 여부 판단 </br></br>
+   - 일정 시간 동안 telemetry / 에러율 / Latency 등을 체크하여 이상 여부 판단
+   - 문제가 감지되면 즉시 Blue로 트래픽 롤백 </br></br>
 6. **Blue 종료**
    - 문제가 없으면 기존 Blue TaskSet 자동 종료
 
@@ -135,6 +136,7 @@
 **트래픽 급증 시**
 1. 트래픽이 이상적으로 급증할시, DDos 공격인지 확인하고 대응한다.
 2. 비즈니스관련 이벤트로 인한 급증시, 부하가 감지되는 리소스들을 Scale out 한다. </br></br>
+
 
 
 
