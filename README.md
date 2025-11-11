@@ -1,4 +1,7 @@
 # a. 클라우드 아키텍처 다이어그램
+![receipt_architecture](https://github.com/user-attachments/assets/3b2e1f34-b085-4004-bbf1-5735ebb0f6a4)
+
+
 </br></br>
 
 # b. 기술 선택 및 설계 근거
@@ -107,8 +110,9 @@
    - 새 Task Definition 기반으로 Green TaskSet이 생성되고 기동됨 </br></br>
 2. **Health Check 검증**
    - Container 및 ALB Target Group 헬스 체크로 동작 여부 확인 </br></br>
-3. **테스트 트래픽 전송 (선택)**
+3. **테스트 트래픽 전송**
    - Test Listener를 구성했다면 일부 트래픽을 Green으로 전송하여 검증 </br></br>
+   - 이상이 감지되면 Blue가 계속 프로덕션 트래픽을 처리
 4. **프로덕션 트래픽 전환**
    - ALB가 Production Listener 트래픽을 기존 Blue → Green으로 100% 전환 </br></br>
 5. **안정화 시간(Bake Time) 대기**
@@ -136,6 +140,7 @@
 **트래픽 급증 시**
 1. 트래픽이 이상적으로 급증할시, DDos 공격인지 확인하고 대응한다.
 2. 비즈니스관련 이벤트로 인한 급증시, 부하가 감지되는 리소스들을 Scale out 한다. </br></br>
+
 
 
 
