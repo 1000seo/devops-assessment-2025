@@ -85,7 +85,36 @@
 </br> </br>
 
 ### 무중단 배포 전략
+**Blue/Green** 배포 전략을 사용하여 무중단 배포를 구성한다.
 
+**선택 이유**
+| 고려 요소 | 내용 |
+|-----------|------|
+| **ECS 기반 환경과 자연스럽게 연동됨** | ECS Native Blue/Green은 ECS Service 내부에 내장된 기능으로, 별도 CI/CD 도구 없이도 TaskSet 기반으로 Blue/Green 배포 가능 |
+| **서비스 중단 없이 배포 가능** | 신규 버전(Green)을 미리 띄운 뒤 Health Check가 통과될 때만 트래픽을 전환하므로 배포 중에도 서비스 중단이 없음 |
+| **롤백이 즉시 가능함** | 문제 발생 시 기존 Blue TaskSet으로 트래픽만 되돌리면 되므로, 롤백 속도가 매우 빠름 |
+
+</br></br>
+
+**배포 방식**
+1. 기존 Blue 서비스를 유지한 상태로 신규 Green TaskSet을 병렬로 생성 </br>
+2. ALB Target Group을 이용하여 트래픽을 단계적으로 전환 </br>
+3. 자동 Health Check 및 Bake Time을 통해 장애 발생 시 안전하게 롤백 가능 </br>
+
+</br></br>
+**배포 흐름**
+1. **Green TaskSet 생성**
+   - 새 Task Definition 기반으로 Green TaskSet이 생성되고 기동됨 </br></br>
+2. **Health Check 검증**
+   - Container 및 ALB Target Group 헬스 체크로 동작 여부 확인 </br></br>
+3. **테스트 트래픽 전송 (선택)**
+   - Test Listener를 구성했다면 일부 트래픽을 Green으로 전송하여 검증 </br></br>
+4. **프로덕션 트래픽 전환**
+   - ALB가 Production Listener 트래픽을 기존 Blue → Green으로 100% 전환 </br></br>
+5. **안정화 시간(Bake Time) 대기**
+   - 일정 시간 동안 telemetry / 에러율 / Latency 등을 체크하여 이상 여부 판단 </br></br>
+6. **Blue 종료**
+   - 문제가 없으면 기존 Blue TaskSet 자동 종료
 
 </br></br>
 
@@ -106,6 +135,7 @@
 **트래픽 급증 시**
 1. 트래픽이 이상적으로 급증할시, DDos 공격인지 확인하고 대응한다.
 2. 비즈니스관련 이벤트로 인한 급증시, 부하가 감지되는 리소스들을 Scale out 한다. </br></br>
+
 
 
 
