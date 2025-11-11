@@ -46,6 +46,7 @@ services:
       timeout: 5s
       retries: 5
       # 컨테이너 실행시 healthcheck.interval=10s로 인한 healthy 10s 대기시간을 2s로 단축
+      # start_interval은 Docker Compose CLI v2.20.2 이상에서만 지원됨
       start_period: 10s
       start_interval: 2s
     networks:
