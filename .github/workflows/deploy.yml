@@ -133,7 +133,6 @@ jobs:
       # Build Job에서 생성한 IMAGE_TAG를 배포 Job에서 사용하도록 환경변수로 전달
       IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
     steps:
-
       # Deploy 단계에서도 Task Definition 파일(JSON)이 필요하므로 저장소 다시 체크아웃
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -144,7 +143,6 @@ jobs:
       - name: Configure AWS Credentials
         run: |
           echo "Successfully configured AWS credentials"
-
         # 실제 실행 명령어
         # uses: aws-actions/configure-aws-credentials@v3
         # with:
@@ -181,7 +179,6 @@ jobs:
         run: |
           echo "📦 Registering new task definition revision..."
           echo "✅ New Task Definition ARN created"
-
         # 실제 실행 명령어
         # TASK_DEF_ARN=$(aws ecs register-task-definition \
         #   --cli-input-json file://new-taskdef.json \
@@ -193,7 +190,6 @@ jobs:
         run: |
           echo "🚀 Deploying new task revision to ECS..."
           echo "✅ Deployment triggered"
-
         # 실제 실행 명령어
         # aws ecs update-service \
         #   --cluster $ECS_CLUSTER \
@@ -206,7 +202,6 @@ jobs:
         run: |
           echo "⏳ Waiting for ECS service to become stable..."
           echo "✅ Service is now stable "
-
         # 실제 실행 명령어
         # aws ecs wait services-stable --cluster $ECS_CLUSTER --services $ECS_SERVICE
 
